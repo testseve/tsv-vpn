@@ -1,0 +1,43 @@
+{{define "scan"}}
+<div id="scan-panel" class="mt-4 min-w-0 text-sm"
+     {{if .Running}}hx-get="/scans/{{.ID}}" hx-trigger="every 2s" hx-target="#scan-panel" hx-swap="outerHTML"{{end}}>
+    {{with .Error}}<p class="error">{{.}}</p>{{end}}
+    {{if .Prefix}}
+    <p class="text-zinc-400">
+        {{.Prefix}}{{with .Iface}} via {{.}}{{end}} ·
+        {{if .Running}}<span class="animate-pulse text-sky-400">scanning</span>{{else}}done{{end}} · {{len .Hosts}} host(s)
+    </p>
+    {{if .Running}}
+    <div class="progress mt-3"><div class="progress-bar"></div></div>
+    {{end}}
+    <div class="table-scroll mt-3">
+    <table class="w-full">
+        <tbody>
+        {{range .Hosts}}
+        <tr class="border-t border-zinc-800">
+            <td class="py-2 font-mono break-words text-zinc-100">{{.Addr}}</td>
+            <td class="py-2 text-zinc-400">{{.RTT}}</td>
+            <td class="py-2 break-words text-zinc-400">{{.Name}}</td>
+            <td class="py-2 text-right">
+                {{if $.ConnectionID}}
+                <button class="btn-quiet" hx-post="/connections/{{$.ConnectionID}}/health-check"
+                        hx-vals='{"ip": "{{.Addr}}"}' hx-target="closest td" hx-swap="innerHTML">
+                    Use as health check
+                </button>
+                {{else if $.SubnetID}}
+                <button class="btn-quiet" hx-post="/subnets/{{$.SubnetID}}/health-check"
+                        hx-vals='{"ip": "{{.Addr}}"}' hx-target="closest td" hx-swap="innerHTML">
+                    Use as health check
+                </button>
+                {{end}}
+            </td>
+        </tr>
+        {{end}}
+        </tbody>
+    </table>
+    </div>
+    {{end}}
+</div>
+{{end}}
+
+{{define "health-check-set"}}<span class="text-emerald-500">health check: {{.}}</span>{{end}}

@@ -1,0 +1,33 @@
+services:
+  tsv-vpn:
+    build: .
+    container_name: tsv-vpn
+    init: true
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+      - /dev/ppp
+    sysctls:
+      net.ipv4.ip_forward: "1"
+      net.ipv6.conf.all.forwarding: "1"
+    volumes:
+      - tsv-vpn-ts-state:/var/lib/tailscale
+      - tsv-vpn-data:/data
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY:-}
+      TS_HOSTNAME: ${TS_HOSTNAME:-tsv-vpn}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:-}
+    ports:
+      - "127.0.0.1:8080:8080"
+    secrets:
+      - tsv_vpn_master_key
+    restart: unless-stopped
+
+secrets:
+  tsv_vpn_master_key:
+    file: ${MASTER_KEY_PATH:-./master.key}
+
+volumes:
+  tsv-vpn-ts-state:
+  tsv-vpn-data:

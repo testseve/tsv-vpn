@@ -1,0 +1,6 @@
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="tsv-vpn">
+    <rect x="2" y="2" width="60" height="60" rx="14" fill="#18181b" stroke="#3f3f46" stroke-width="2"/>
+    <path d="M32 10 L49 16.5 V29 C49 41.5 41.5 49.7 32 54 C22.5 49.7 15 41.5 15 29 V16.5 Z"
+          fill="rgba(0,165,239,.12)" stroke="#00a5ef" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M24 32 L29.5 37.5 L40.5 26" stroke="#f4f4f5" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

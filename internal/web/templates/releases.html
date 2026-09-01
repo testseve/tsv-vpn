@@ -1,0 +1,22 @@
+{{define "content"}}
+<h1 class="text-xl font-semibold">Release notes</h1>
+<div class="mt-6 grid gap-4">
+    {{range .Data}}
+    <section class="card min-w-0">
+        <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 class="font-semibold text-zinc-100">{{.Version}}</h2>
+            <span class="text-sm text-zinc-400">{{.Date}}</span>
+        </div>
+        {{range .Notes}}<p class="mt-2 text-sm text-zinc-400">{{.}}</p>{{end}}
+        {{range .Sections}}
+        <h3 class="mt-4 text-sm font-medium text-zinc-300">{{.Title}}</h3>
+        <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-zinc-400">
+            {{range .Items}}<li>{{.}}</li>{{end}}
+        </ul>
+        {{end}}
+    </section>
+    {{else}}
+    <p class="text-sm text-zinc-400">No releases recorded yet.</p>
+    {{end}}
+</div>
+{{end}}

@@ -1,0 +1,27 @@
+{{define "content"}}
+<div class="mx-auto max-w-sm">
+    <div class="mb-6 flex flex-col items-center gap-3">
+        <span class="block h-14 w-14">{{template "logo"}}</span>
+        <span class="text-lg font-semibold">tsv-vpn</span>
+    </div>
+    <h1 class="text-xl font-semibold">Choose an admin password</h1>
+    <p class="mt-2 text-sm text-zinc-400">
+        This node has no password yet, so the UI is answering anyone who can reach it.
+        Setting a password closes that window.
+    </p>
+    <form method="post" action="/setup" class="card mt-6 space-y-4">
+        <div>
+            <label class="label" for="password">Password</label>
+            <input class="input" id="password" name="password" type="password"
+                   autocomplete="new-password" autofocus required minlength="10">
+        </div>
+        <div>
+            <label class="label" for="confirm">Confirm</label>
+            <input class="input" id="confirm" name="confirm" type="password"
+                   autocomplete="new-password" required minlength="10">
+        </div>
+        {{with .Data.Error}}<p class="error">{{.}}</p>{{end}}
+        <button class="btn" type="submit">Set password</button>
+    </form>
+</div>
+{{end}}

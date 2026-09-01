@@ -1,0 +1,168 @@
+@import "tailwindcss";
+
+@source "./templates";
+
+@layer base {
+    body {
+        @apply bg-zinc-950 text-zinc-100 antialiased;
+    }
+
+    a {
+        @apply text-sky-500 hover:text-sky-400;
+    }
+}
+
+@layer components {
+    .card {
+        @apply rounded-lg border border-zinc-800 bg-zinc-900 p-5;
+    }
+
+    .label {
+        @apply block text-sm text-zinc-400;
+    }
+
+    .input {
+        @apply mt-1 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-zinc-100
+        placeholder:text-zinc-600 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 focus:outline-none;
+    }
+
+    .btn {
+        @apply inline-flex cursor-pointer items-center gap-2 rounded-md bg-sky-500 px-3 py-2 text-sm
+        font-medium text-zinc-950 transition-all duration-150 ease-out select-none
+        hover:bg-sky-400 hover:shadow-lg hover:shadow-sky-500/20
+        focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none
+        active:scale-[0.97] active:bg-sky-300 active:shadow-none;
+    }
+
+    .btn-quiet {
+        @apply inline-flex cursor-pointer items-center gap-2 rounded-md border border-zinc-800 px-3 py-2
+        text-sm text-zinc-300 transition-all duration-150 ease-out select-none
+        hover:border-zinc-600 hover:bg-zinc-800/60 hover:text-zinc-100
+        focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none
+        active:scale-[0.97] active:bg-zinc-800;
+    }
+
+    /* htmx marks the element that issued a request with .htmx-request: the
+       button itself, or the form when a submit triggered it. While one is in
+       flight the button dims, ignores further clicks and grows a spinner. */
+    .btn.htmx-request,
+    .btn-quiet.htmx-request,
+    form.htmx-request .btn,
+    form.htmx-request .btn-quiet {
+        @apply pointer-events-none opacity-60;
+    }
+
+    .btn.htmx-request::after,
+    .btn-quiet.htmx-request::after,
+    form.htmx-request .btn::after,
+    form.htmx-request .btn-quiet::after {
+        content: "";
+        width: 0.85em;
+        height: 0.85em;
+        flex: none;
+        border-radius: 9999px;
+        border: 2px solid currentColor;
+        border-top-color: transparent;
+        animation: btn-spin 0.6s linear infinite;
+    }
+
+    /* Content swapped in by a user action eases into place. Polling targets
+       must not carry this class or the page pulses on every refresh. */
+    .fade-swap.htmx-added {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    .fade-swap {
+        transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+    }
+
+    .page-enter {
+        animation: page-enter 0.25s ease-out;
+    }
+
+    .progress {
+        @apply h-1 w-full overflow-hidden rounded-full bg-zinc-800;
+    }
+
+    /* The scan panel is re-rendered by a 2s poll, which restarts this
+       animation; a 1s cycle lands each restart on the same frame. */
+    .progress-bar {
+        @apply h-full w-1/3 rounded-full bg-sky-500;
+        animation: progress-slide 1s ease-in-out infinite;
+    }
+
+    .badge {
+        @apply inline-flex items-center gap-2 rounded-full border border-zinc-800 px-3 py-1 text-xs text-zinc-300;
+    }
+
+    .dot {
+        @apply size-2 rounded-full;
+    }
+
+    .dot-up {
+        @apply bg-emerald-500;
+    }
+
+    .dot-connecting {
+        @apply bg-amber-500;
+    }
+
+    .dot-failed {
+        @apply bg-red-500;
+    }
+
+    .dot-disconnected {
+        @apply bg-zinc-600;
+    }
+
+    /* Daemon errors arrive as several long lines, so they wrap and scroll inside
+       the card instead of stretching it. */
+    .error {
+        @apply max-h-40 overflow-y-auto rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2
+        text-sm break-words whitespace-pre-wrap text-red-400;
+    }
+
+    .log {
+        @apply mt-2 max-h-56 overflow-y-auto rounded-md border border-zinc-800 bg-zinc-950 p-3
+        font-mono text-xs break-words whitespace-pre-wrap text-zinc-300;
+    }
+
+    .table-scroll {
+        @apply -mx-1 overflow-x-auto px-1;
+    }
+}
+
+@keyframes btn-spin {
+    to {
+        transform: rotate(1turn);
+    }
+}
+
+@keyframes page-enter {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+}
+
+@keyframes progress-slide {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(300%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn,
+    .btn-quiet,
+    .fade-swap,
+    .page-enter {
+        transition: none;
+        animation: none;
+        transform: none;
+    }
+}

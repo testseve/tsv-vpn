@@ -1,0 +1,16 @@
+remotename example
+ipparam example
+user "replace-with-ppp-username"
+noauth
+refuse-eap
+refuse-pap
+hide-password
+nodefaultroute
+noipdefault
+usepeerdns
+noccp
+mtu 1400
+mru 1400
+lcp-echo-interval 10
+lcp-echo-failure 5
+connect-delay 5000

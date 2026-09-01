@@ -1,0 +1,12 @@
+name testlns
+auth
+require-chap
+refuse-pap
+refuse-eap
+noccp
+mtu 1400
+mru 1400
+lcp-echo-interval 10
+lcp-echo-failure 5
+nodefaultroute
+proxyarp

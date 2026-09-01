@@ -1,0 +1,84 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: gofmt
+        run: test -z "$(gofmt -l cmd internal)"
+      - run: go vet ./...
+      - run: go test -race ./...
+
+  e2e:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The rig needs the IPsec and PPP/L2TP modules; ppp_generic also
+      # creates /dev/ppp.
+      - name: Load IPsec and L2TP kernel modules
+        run: sudo modprobe af_key xfrm_user ppp_generic l2tp_ppp pppol2tp
+      - name: Run the end-to-end rig
+        run: |
+          set -o pipefail
+          sh test/rig.sh 2>&1 | tee rig.log
+      - name: Upload rig log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-rig-log
+          path: rig.log
+
+  image:
+    needs: [test, e2e]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the tag matches version.go
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          version=$(sed -n 's/^const Version = "\(.*\)"$/\1/p' version.go)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "tag $GITHUB_REF_NAME does not match version.go ($version)"
+            exit 1
+          fi
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=match,pattern=v(.*),group=1
+            type=match,pattern=v(\d+\.\d+\.\d+),group=1
+            type=sha
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

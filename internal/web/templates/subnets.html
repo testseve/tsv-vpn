@@ -1,0 +1,11 @@
+{{define "content"}}
+<h1 class="text-xl font-semibold">Subnets</h1>
+<div class="mt-6">
+    {{template "subnet-panel" .Data}}
+</div>
+<section class="card mt-4 min-w-0">
+    <h2 class="font-semibold">Scan</h2>
+    <p class="mt-1 text-sm text-zinc-400">ICMP echo to every host in the subnet, up to a /22.</p>
+    <div id="scan-panel" class="fade-swap mt-4 text-sm text-zinc-400">Pick a subnet above to scan it.</div>
+</section>
+{{end}}

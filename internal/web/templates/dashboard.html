@@ -1,0 +1,21 @@
+{{define "content"}}
+<div class="flex flex-wrap items-center justify-between gap-3">
+    <h1 class="text-xl font-semibold">Connections</h1>
+    <a class="btn" href="/connections/new">Add connection</a>
+</div>
+
+{{if .Data.NeedsTailnet}}
+<div class="card mt-6 flex flex-wrap items-center justify-between gap-3 border-amber-500/40 bg-amber-500/10">
+    <p class="text-sm text-amber-300">This node has not joined a tailnet, so nothing can reach these subnets yet.</p>
+    <a class="btn shrink-0" href="/tailnet">Set up tailnet</a>
+</div>
+{{end}}
+
+<div class="mt-6">
+    {{template "connection-list" .Data.Cards}}
+</div>
+
+<div class="mt-4">
+    {{template "local-health" .Data.Subnets}}
+</div>
+{{end}}

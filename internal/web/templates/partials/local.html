@@ -1,0 +1,43 @@
+{{define "local-health"}}
+<div id="local-health" class="min-w-0" hx-get="/subnets/health" hx-trigger="every 10s" hx-swap="outerHTML">
+    {{if .}}
+    <section class="card min-w-0">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+            <h2 class="font-semibold">Local networks</h2>
+            <a class="text-xs" href="/subnets">Manage subnets</a>
+        </div>
+        <div class="table-scroll mt-3">
+        <table class="w-full text-sm">
+            <tbody>
+            {{range .}}
+            <tr class="border-t border-zinc-800">
+                <td class="py-2">
+                    <span class="badge">
+                        <span class="dot {{if eq .State "up"}}dot-up{{else if eq .State "failed"}}dot-failed{{else if eq .State "connecting"}}dot-connecting{{else}}dot-disconnected{{end}}"></span>
+                        {{if eq .State "unchecked"}}no check{{else}}{{.State}}{{end}}
+                    </span>
+                </td>
+                <td class="py-2 font-mono break-words text-zinc-100">{{.Subnet.CIDR}}</td>
+                <td class="py-2 break-words text-zinc-400">{{.Subnet.Description}}</td>
+                <td class="py-2 font-mono text-zinc-400">{{.Subnet.HealthCheckIP}}</td>
+                <td class="py-2 text-zinc-100">{{.RTT}}{{with .LastCheck}}<div class="text-xs text-zinc-400">{{.}}</div>{{end}}</td>
+                <td class="py-2 text-right">
+                    {{if .Subnet.HealthCheckIP}}
+                    <button class="btn-quiet px-2 py-1 text-xs" hx-post="/subnets/{{.Subnet.ID}}/check"
+                            hx-target="#local-health" hx-swap="outerHTML">Test now</button>
+                    {{else}}
+                    <a class="text-xs" href="/subnets">set up check</a>
+                    {{end}}
+                </td>
+            </tr>
+            {{with .Subnet.LastError}}
+            <tr><td colspan="6" class="pb-2"><p class="error">{{.}}</p></td></tr>
+            {{end}}
+            {{end}}
+            </tbody>
+        </table>
+        </div>
+    </section>
+    {{end}}
+</div>
+{{end}}

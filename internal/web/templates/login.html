@@ -1,0 +1,16 @@
+{{define "content"}}
+<div class="mx-auto max-w-sm">
+    <div class="mb-6 flex flex-col items-center gap-3">
+        <span class="block h-14 w-14">{{template "logo"}}</span>
+        <h1 class="text-xl font-semibold">tsv-vpn</h1>
+    </div>
+    <form method="post" action="/login" class="card space-y-4">
+        <div>
+            <label class="label" for="password">Admin password</label>
+            <input class="input" id="password" name="password" type="password" autocomplete="current-password" autofocus required>
+        </div>
+        {{with .Data.Error}}<p class="error">{{.}}</p>{{end}}
+        <button class="btn" type="submit">Sign in</button>
+    </form>
+</div>
+{{end}}

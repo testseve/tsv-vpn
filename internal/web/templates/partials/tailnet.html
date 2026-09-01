@@ -1,0 +1,147 @@
+{{define "tailnet-status"}}
+<div id="tailnet-status" class="grid min-w-0 gap-4"
+     {{if not .Running}}hx-get="/tailnet/status" hx-trigger="every 5s" hx-target="#tailnet-status" hx-swap="outerHTML"{{end}}>
+
+    {{with .Error}}<p class="error">{{.}}</p>{{end}}
+
+    <section class="card min-w-0">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0">
+                <h2 class="font-semibold">This node</h2>
+                <p class="mt-1 text-sm break-words text-zinc-400">
+                    {{if .DNSName}}{{.DNSName}}{{else if .Hostname}}{{.Hostname}}{{else}}not registered yet{{end}}
+                </p>
+            </div>
+            <span class="badge shrink-0">
+                <span class="dot {{if .Running}}dot-up{{else if .Unreachable}}dot-failed{{else}}dot-connecting{{end}}"></span>
+                {{.State}}
+            </span>
+        </div>
+
+        {{if .Addrs}}
+        <dl class="mt-4 text-sm">
+            <dt class="text-zinc-400">Tailnet addresses</dt>
+            <dd class="font-mono break-words text-zinc-100">{{range .Addrs}}<div>{{.}}</div>{{end}}</dd>
+        </dl>
+        {{end}}
+
+        {{if .Unreachable}}
+        <p class="mt-4 text-sm text-zinc-400">tailscaled is not answering. It restarts on its own; this page keeps checking.</p>
+        {{end}}
+    </section>
+
+    {{if not .Running}}
+    <section class="card min-w-0">
+        <h2 class="font-semibold">Join a tailnet</h2>
+        <p class="mt-1 text-sm text-zinc-400">Either way works. The browser login needs no key at all.</p>
+
+        {{if .AuthURL}}
+        <a class="btn mt-4" href="{{.AuthURL}}" target="_blank" rel="noreferrer noopener">Authorize on Tailscale</a>
+        <p class="mt-2 text-xs break-all text-zinc-400">{{.AuthURL}}</p>
+        <p class="mt-2 text-xs text-zinc-400">Sign in, approve the machine, and this page turns green on its own.</p>
+        {{end}}
+
+        <form class="mt-4 flex flex-wrap items-end gap-2 border-t border-zinc-800 pt-4"
+              hx-post="/tailnet/login" hx-target="#tailnet-status" hx-swap="outerHTML">
+            <div class="w-full grow sm:w-auto">
+                <label class="label" for="authkey">Or paste a reusable auth key</label>
+                <input class="input font-mono" id="authkey" name="authkey" type="password"
+                       placeholder="tskey-auth-..." autocomplete="off">
+                <p class="mt-1 text-xs text-zinc-400">
+                    Generate one at
+                    <a href="https://login.tailscale.com/admin/settings/keys" target="_blank" rel="noreferrer noopener">login.tailscale.com/admin/settings/keys</a>.
+                    Mark it reusable and tag it <code>tag:subnet-router</code>.
+                </p>
+            </div>
+            <button class="btn" type="submit">Connect</button>
+        </form>
+    </section>
+    {{end}}
+
+    <section class="card min-w-0">
+        <h2 class="font-semibold">Advertised routes</h2>
+        <p class="mt-1 text-sm text-zinc-400">Every enabled tunnel subnet and local subnet, and whether the tailnet has approved it.</p>
+
+        <div class="table-scroll mt-4">
+        <table class="w-full text-sm">
+            <tbody>
+            {{range .Routes}}
+            <tr class="border-t border-zinc-800">
+                <td class="py-2 font-mono break-words text-zinc-100">{{.CIDR}}</td>
+                <td class="py-2 text-right">
+                    {{if .Approved}}<span class="badge"><span class="dot dot-up"></span>approved</span>
+                    {{else}}<span class="badge"><span class="dot dot-connecting"></span>approval pending</span>{{end}}
+                </td>
+            </tr>
+            {{else}}
+            <tr><td class="py-2 text-zinc-400">Nothing advertised yet.</td></tr>
+            {{end}}
+            </tbody>
+        </table>
+        </div>
+
+        <p class="mt-4 text-sm text-zinc-400">
+            Pending routes are approved under
+            <a href="https://login.tailscale.com/admin/machines" target="_blank" rel="noreferrer noopener">Machines</a>
+            → this node → Edit route settings.
+        </p>
+    </section>
+
+    <section class="card min-w-0">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0">
+                <h2 class="font-semibold">Exit node</h2>
+                <p class="mt-1 text-sm text-zinc-400">
+                    Offer this node as an exit node: a tailnet device that selects it sends
+                    all of its internet traffic out through this container's network.
+                </p>
+            </div>
+            {{if .ExitNode}}
+            <span class="badge shrink-0">
+                {{if .ExitNodeApproved}}<span class="dot dot-up"></span>approved
+                {{else}}<span class="dot dot-connecting"></span>approval pending{{end}}
+            </span>
+            {{end}}
+        </div>
+        <form class="mt-4" hx-post="/tailnet/exit-node" hx-target="#tailnet-status" hx-swap="outerHTML">
+            {{if .ExitNode}}
+            <input type="hidden" name="enabled" value="0">
+            <button class="btn" type="submit">Disable exit node</button>
+            {{else}}
+            <input type="hidden" name="enabled" value="1">
+            <button class="btn" type="submit">Enable exit node</button>
+            {{end}}
+        </form>
+        {{if and .ExitNode (not .ExitNodeApproved)}}
+        <p class="mt-4 text-sm text-zinc-400">
+            Like a subnet route, the exit node needs approval under
+            <a href="https://login.tailscale.com/admin/machines" target="_blank" rel="noreferrer noopener">Machines</a>
+            → this node → Edit route settings → Use as exit node.
+        </p>
+        {{end}}
+    </section>
+
+    {{with .Command}}
+    <section class="card min-w-0">
+        <h2 class="font-semibold">Effective command</h2>
+        <p class="mt-1 text-sm text-zinc-400">
+            What the settings on this page amount to as a <code>tailscale up</code> invocation.
+            An auth key, when one is used, is passed as <code>--authkey</code> and never shown here.
+        </p>
+        <pre class="log">{{.}}</pre>
+    </section>
+    {{end}}
+
+    {{with .ACL}}
+    <section class="card min-w-0">
+        <h2 class="font-semibold">Approve routes automatically</h2>
+        <p class="mt-1 text-sm text-zinc-400">
+            Paste this into the tailnet
+            <a href="https://login.tailscale.com/admin/acls" target="_blank" rel="noreferrer noopener">access controls</a>
+            and tag the auth key <code>tag:subnet-router</code>. New subnets are then approved on sight.
+        </p>
+        <pre class="log">{{.}}</pre>
+    </section>
+    {{end}}
+</div>
+{{end}}

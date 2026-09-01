@@ -1,0 +1,90 @@
+{{define "connection-list"}}
+<div id="connections" class="grid gap-4">
+    {{range .}}{{template "connection-card" .}}{{else}}
+    <p class="text-sm text-zinc-400">No connections yet. Add one to get started.</p>
+    {{end}}
+</div>
+{{end}}
+
+{{define "connection-card"}}
+<article id="connection-{{.Conn.ID}}" class="card min-w-0">
+    {{template "connection-status" .}}
+    <div id="connection-{{.Conn.ID}}-logs" class="mt-4 min-w-0"></div>
+</article>
+{{end}}
+
+{{define "connection-status"}}
+<div id="connection-{{.Conn.ID}}-status" class="min-w-0"
+     hx-get="/connections/{{.Conn.ID}}/status"
+     hx-trigger="every 5s"
+     hx-swap="outerHTML">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="min-w-0">
+            <h2 class="font-semibold break-words text-zinc-100">{{.Conn.Name}}</h2>
+            <p class="text-sm break-words text-zinc-400">{{.Conn.GatewayHost}}</p>
+        </div>
+        <span class="badge shrink-0"><span class="dot dot-{{.State}}"></span>{{.State}}{{with .Iface}} · {{.}}{{end}}</span>
+    </div>
+
+    <dl class="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+        <div class="min-w-0">
+            <dt class="text-zinc-400">Subnets</dt>
+            <dd class="break-words text-zinc-100">{{range .Conn.RemoteSubnets}}<div>{{.}}</div>{{end}}</dd>
+        </div>
+        <div class="min-w-0">
+            <dt class="text-zinc-400">Tunnel IP</dt>
+            <dd class="font-mono text-zinc-100">{{if .LocalIP}}{{.LocalIP}}{{else}}-{{end}}</dd>
+        </div>
+        <div class="min-w-0">
+            <dt class="text-zinc-400">Peer IP</dt>
+            <dd class="font-mono text-zinc-100">{{if .PeerIP}}{{.PeerIP}}{{else}}-{{end}}</dd>
+        </div>
+        <div class="min-w-0">
+            <dt class="text-zinc-400">Uptime</dt>
+            <dd class="text-zinc-100">{{if .Uptime}}{{.Uptime}}{{else}}-{{end}}{{with .Since}}<div class="text-xs text-zinc-400">since {{.}}</div>{{end}}</dd>
+        </div>
+        <div class="min-w-0">
+            <dt class="text-zinc-400">Health check</dt>
+            <dd class="break-words text-zinc-100">{{if .Conn.HealthCheckIP}}{{.Conn.HealthCheckIP}}{{else}}not set{{end}}</dd>
+        </div>
+        <div class="min-w-0">
+            <dt class="text-zinc-400">Last RTT</dt>
+            <dd class="text-zinc-100">{{if .RTT}}{{.RTT}}{{else}}-{{end}}{{with .LastCheck}}<div class="text-xs text-zinc-400">{{.}}</div>{{end}}</dd>
+        </div>
+    </dl>
+
+    {{with .LastError}}<p class="error mt-4">{{.}}</p>{{end}}
+
+    <div class="mt-4 flex flex-wrap gap-2">
+        {{if .Conn.Enabled}}
+        <button class="btn-quiet" hx-post="/connections/{{.Conn.ID}}/disable"
+                hx-target="#connection-{{.Conn.ID}}-status" hx-swap="outerHTML">Disconnect</button>
+        {{else}}
+        <button class="btn" hx-post="/connections/{{.Conn.ID}}/enable"
+                hx-target="#connection-{{.Conn.ID}}-status" hx-swap="outerHTML">Connect</button>
+        {{end}}
+        <button class="btn-quiet" hx-post="/connections/{{.Conn.ID}}/check"
+                hx-target="#connection-{{.Conn.ID}}-status" hx-swap="outerHTML">Test now</button>
+        <button class="btn-quiet" hx-get="/connections/{{.Conn.ID}}/logs"
+                hx-target="#connection-{{.Conn.ID}}-logs" hx-swap="innerHTML">Logs</button>
+        <a class="btn-quiet" href="/connections/{{.Conn.ID}}/edit">Edit</a>
+        <button class="btn-quiet text-red-400 hover:text-red-300"
+                hx-delete="/connections/{{.Conn.ID}}"
+                hx-confirm="Delete {{.Conn.Name}}? Its tunnel, routes and NAT rules are removed."
+                hx-target="#connection-{{.Conn.ID}}" hx-swap="delete">Delete</button>
+    </div>
+</div>
+{{end}}
+
+{{define "connection-logs"}}
+<div class="min-w-0" hx-get="/connections/{{.ID}}/logs" hx-trigger="every 10s" hx-swap="outerHTML">
+    <div class="flex items-center justify-between">
+        <h3 class="text-sm text-zinc-400">Recent daemon output</h3>
+        <button class="text-xs text-zinc-400 hover:text-zinc-100"
+                hx-get="/connections/{{.ID}}/logs/close"
+                hx-target="#connection-{{.ID}}-logs" hx-swap="innerHTML">Hide</button>
+    </div>
+    <pre class="log">{{range .Lines}}{{.At}} {{.Source}}: {{.Text}}
+{{else}}nothing logged yet{{end}}</pre>
+</div>
+{{end}}

@@ -1,0 +1,40 @@
+# The app next to a real L2TP/IPsec endpoint; no tailnet, no production
+# gateway. Driven by test/rig.sh.
+services:
+  vpn-server:
+    build: ./test/l2tp-server
+    container_name: tsv-vpn-test-server
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/ppp
+    sysctls:
+      net.ipv4.ip_forward: "1"
+
+  tsv-vpn:
+    build: .
+    container_name: tsv-vpn-test
+    init: true
+    depends_on:
+      - vpn-server
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+      - /dev/ppp
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    environment:
+      TS_AUTHKEY: ""
+      TS_HOSTNAME: tsv-vpn-test
+      ADMIN_PASSWORD_HASH: $$2a$$10$$63O/AQxQ9wqY84pueg7kf.rpzn1JxePYAxfEUZ5MAwBSfYKphc6Nq
+      MASTER_KEY_FILE: /run/secrets/tsv_vpn_master_key
+      TSV_VPN_HEALTH_INTERVAL: 5s
+    secrets:
+      - tsv_vpn_master_key
+    ports:
+      - "127.0.0.1:8099:8080"
+
+secrets:
+  tsv_vpn_master_key:
+    file: ./test/master.key

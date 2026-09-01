@@ -1,0 +1,112 @@
+{{define "subnet-panel"}}
+<div id="subnet-panel" class="fade-swap grid min-w-0 gap-4">
+    {{with .Error}}<p class="error">{{.}}</p>{{end}}
+
+    <section class="card min-w-0">
+        <h2 class="font-semibold">Local subnets</h2>
+        <p class="mt-1 text-sm text-zinc-400">Reached over the container's own network and advertised to the tailnet.</p>
+
+        <div class="table-scroll mt-4">
+        <table class="w-full text-sm">
+            <tbody>
+            {{range .Local}}
+            <tr class="border-t border-zinc-800">
+                <td class="py-2 font-mono break-words text-zinc-100">{{.Subnet.CIDR}}</td>
+                <td class="py-2 break-words text-zinc-400">{{.Subnet.Description}}</td>
+                <td class="py-2">
+                    <form class="flex items-center gap-1" hx-post="/subnets/{{.Subnet.ID}}/health-check"
+                          hx-target="#subnet-panel" hx-swap="outerHTML">
+                        <input class="w-40 rounded-md border border-zinc-800 bg-zinc-900 px-2 py-1 font-mono text-xs text-zinc-100 focus:border-sky-500 focus:outline-none"
+                               name="ip" value="{{.Subnet.HealthCheckIP}}" placeholder="health check IP">
+                        <button class="btn-quiet px-2 py-1 text-xs" type="submit">Set</button>
+                    </form>
+                </td>
+                <td class="py-2">
+                    {{if .Pending}}<span class="badge"><span class="dot dot-connecting"></span>approval pending</span>{{end}}
+                </td>
+                <td class="py-2 text-right">
+                    <div class="flex flex-wrap justify-end gap-2">
+                        {{if .Subnet.Enabled}}
+                        <button class="btn-quiet" hx-post="/subnets/{{.Subnet.ID}}/disable"
+                                hx-target="#subnet-panel" hx-swap="outerHTML">Disable</button>
+                        {{else}}
+                        <button class="btn-quiet" hx-post="/subnets/{{.Subnet.ID}}/enable"
+                                hx-target="#subnet-panel" hx-swap="outerHTML">Enable</button>
+                        {{end}}
+                        <button class="btn-quiet" hx-post="/scans"
+                                hx-vals='{"cidr": "{{.Subnet.CIDR}}", "subnet_id": "{{.Subnet.ID}}"}'
+                                hx-target="#scan-panel" hx-swap="outerHTML">Scan</button>
+                        <button class="btn-quiet text-red-400 hover:text-red-300"
+                                hx-delete="/subnets/{{.Subnet.ID}}"
+                                hx-confirm="Remove {{.Subnet.CIDR}} from the advertised routes?"
+                                hx-target="#subnet-panel" hx-swap="outerHTML">Remove</button>
+                    </div>
+                </td>
+            </tr>
+            {{else}}
+            <tr><td class="py-2 text-zinc-400">No local subnets yet.</td></tr>
+            {{end}}
+            </tbody>
+        </table>
+        </div>
+
+        {{with .Candidates}}
+        <div class="mt-4 border-t border-zinc-800 pt-4">
+            <h3 class="text-sm text-zinc-400">Detected networks</h3>
+            <div class="mt-2 flex flex-wrap gap-2">
+                {{range .}}
+                <form hx-post="/subnets" hx-target="#subnet-panel" hx-swap="outerHTML" class="flex min-w-0 items-center gap-1">
+                    <input type="hidden" name="description" value="{{.Description}}">
+                    <input class="w-40 rounded-md border border-zinc-800 bg-zinc-900 px-2 py-1 font-mono text-xs text-zinc-100 focus:border-sky-500 focus:outline-none"
+                           name="cidr" value="{{.CIDR}}">
+                    <button class="btn-quiet px-2 py-1 text-xs" type="submit">Add</button>
+                </form>
+                {{end}}
+            </div>
+            <p class="mt-2 text-xs text-zinc-400">Gateway guesses are editable before adding.</p>
+        </div>
+        {{end}}
+
+        <form class="mt-4 flex flex-wrap items-end gap-2 border-t border-zinc-800 pt-4"
+              hx-post="/subnets" hx-target="#subnet-panel" hx-swap="outerHTML">
+            <div class="w-full sm:w-56">
+                <label class="label" for="cidr">Add a subnet</label>
+                <input class="input font-mono" id="cidr" name="cidr" placeholder="192.0.2.0/24" required>
+            </div>
+            <div class="w-full grow sm:w-auto">
+                <label class="label" for="description">Description</label>
+                <input class="input" id="description" name="description" placeholder="office LAN">
+            </div>
+            <button class="btn" type="submit">Add</button>
+        </form>
+    </section>
+
+    <section class="card min-w-0">
+        <h2 class="font-semibold">Tunnel subnets</h2>
+        <p class="mt-1 text-sm text-zinc-400">Owned by their connection; edit them there.</p>
+        <div class="table-scroll mt-4">
+        <table class="w-full text-sm">
+            <tbody>
+            {{range .VPN}}
+            <tr class="border-t border-zinc-800">
+                <td class="py-2 font-mono break-words text-zinc-100">{{.CIDR}}</td>
+                <td class="py-2"><a href="/connections/{{.ConnectionID}}/edit">{{.Connection}}</a></td>
+                <td class="py-2 text-right">
+                    <div class="flex flex-wrap items-center justify-end gap-2">
+                        {{if not .Enabled}}<span class="badge"><span class="dot dot-disabled"></span>disabled</span>
+                        {{else if .Pending}}<span class="badge"><span class="dot dot-connecting"></span>approval pending</span>{{end}}
+                        <button class="btn-quiet" hx-post="/scans"
+                                hx-vals='{"cidr": "{{.CIDR}}", "connection_id": "{{.ConnectionID}}"}'
+                                hx-target="#scan-panel" hx-swap="outerHTML">Scan</button>
+                    </div>
+                </td>
+            </tr>
+            {{else}}
+            <tr><td class="py-2 text-zinc-400">No tunnel subnets yet.</td></tr>
+            {{end}}
+            </tbody>
+        </table>
+        </div>
+    </section>
+</div>
+{{end}}

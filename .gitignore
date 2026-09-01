@@ -1,0 +1,9 @@
+PLAN.md
+.env
+/data/
+/state/
+*.db
+*.db-wal
+*.db-shm
+/tsv-vpn
+master.key

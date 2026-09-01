@@ -1,0 +1,68 @@
+{{define "connection-form"}}
+<form id="connection-form" class="card min-w-0 space-y-4" hx-post="{{.Action}}" hx-target="#connection-form" hx-swap="outerHTML">
+    {{with .Error}}<p class="error">{{.}}</p>{{end}}
+
+    <div class="grid gap-4 sm:grid-cols-2">
+        <div class="min-w-0">
+            <label class="label" for="name">Name</label>
+            <input class="input" id="name" name="name" value="{{.Conn.Name}}"
+                   placeholder="office" pattern="[a-z0-9][a-z0-9-]*[a-z0-9]" required>
+            <p class="mt-1 text-xs text-zinc-400">Lowercase letters, digits and dashes. Used as the tunnel name.</p>
+        </div>
+        <div class="min-w-0">
+            <label class="label" for="gateway_host">Gateway host</label>
+            <input class="input" id="gateway_host" name="gateway_host" value="{{.Conn.GatewayHost}}"
+                   placeholder="vpn.example.com" required>
+            <button type="button" class="btn-quiet mt-2" hx-post="/connections/preflight"
+                    hx-include="#gateway_host" hx-target="#preflight" hx-swap="innerHTML">Test gateway</button>
+            <div id="preflight" class="mt-2 text-xs break-words text-zinc-400"></div>
+        </div>
+        <div>
+            <label class="label" for="psk">Pre-shared key</label>
+            <input class="input" id="psk" name="psk" type="password" autocomplete="new-password"
+                   {{if .IsNew}}required{{else}}placeholder="set, leave blank to keep"{{end}}>
+        </div>
+        <div>
+            <label class="label" for="ppp_username">PPP username</label>
+            <input class="input" id="ppp_username" name="ppp_username" value="{{.Conn.PPPUsername}}" required>
+        </div>
+        <div>
+            <label class="label" for="ppp_password">PPP password</label>
+            <input class="input" id="ppp_password" name="ppp_password" type="password" autocomplete="new-password"
+                   {{if .IsNew}}required{{else}}placeholder="set, leave blank to keep"{{end}}>
+        </div>
+        <div>
+            <label class="label" for="health_check_ip">Health check IP</label>
+            <input class="input" id="health_check_ip" name="health_check_ip" value="{{.Conn.HealthCheckIP}}"
+                   placeholder="198.51.100.10">
+            <p class="mt-1 text-xs text-zinc-400">Optional. Pinged through the tunnel every 30 seconds.</p>
+        </div>
+    </div>
+
+    <div>
+        <label class="label" for="remote_subnets">Remote subnets</label>
+        <textarea class="input font-mono" id="remote_subnets" name="remote_subnets" rows="3"
+                  placeholder="198.51.100.0/24">{{.Subnets}}</textarea>
+        <p class="mt-1 text-xs text-zinc-400">One CIDR per line. Advertised to the tailnet and routed over this tunnel.</p>
+    </div>
+
+    <label class="flex items-center gap-2 text-sm text-zinc-300">
+        <input type="checkbox" name="enabled" value="1" class="size-4 rounded border-zinc-700 bg-zinc-900 text-sky-500 focus:ring-sky-500"
+               {{if .Conn.Enabled}}checked{{end}}>
+        Enabled
+    </label>
+
+    <div class="flex gap-2">
+        <button class="btn" type="submit">Save</button>
+        <a class="btn-quiet" href="/">Cancel</a>
+    </div>
+</form>
+{{end}}
+
+{{define "preflight"}}
+{{if .Error}}<span class="text-red-400">{{.Error}}</span>
+{{else}}<span class="text-zinc-300">{{.Addr}}</span>
+{{if .RTT}}<span class="text-emerald-500"> · replied in {{.RTT}}</span>
+{{else}}<span class="text-amber-500"> · no ICMP reply, which many gateways block</span>{{end}}
+{{end}}
+{{end}}
